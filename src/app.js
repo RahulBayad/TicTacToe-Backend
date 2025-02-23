@@ -35,7 +35,7 @@ let games = {}
 const checkWinner = (gameState)=> {
     const winnerCombinations = [
       [0,1,2],[3,4,5],[6,7,8],
-      [0,3,6],[1,4,7],[3,5,8],
+      [0,3,6],[1,4,7],[3,5,8],  
       [0,4,8],[2,4,6],
     ]
     for(let winnerCombination of winnerCombinations){
@@ -89,19 +89,21 @@ io.on("connection",(socket)=>{
 
     socket.on("playerMove",({index , roomId})=>{
         let game = games[roomId]
-        
+          
         game.gameState[index] = game.room[Object.keys(game.room).find((id)=> id === socket.id)]        
         game.playerTurn = Object.keys(game.room).find((id)=> id !== socket.id)
         let winner = checkWinner(game.gameState)
         
         // game.winner = (winner && winner === game.room[socket.id]) ? socket.id : game.playerTurn 
-        game.winner = !winner ? null : winner === game.room[socket.id] ? socket.id : game.playerTurn 
-        
-        
-        games[roomId] = game    // update gameState in gamesData    
-
+        game.winner = !winner ? null : winner === game.room[socket.id] ? socket.id : game.playerTurn         
         io.to(roomId).emit("playerMove", game) 
-    })  
+    }) 
+    
+    socket.on("timeout",({roomId})=>{
+        let game = games[roomId]
+        game.playerTurn = Object.keys(game.room).find((id)=> id !== game.playerTurn)                        
+        io.to(roomId).emit("timeout", game)
+    })
     
     socket.on("restart",({roomId})=>{
         let game = games[roomId]
